@@ -1,23 +1,58 @@
-// Script for populating available slots dynamically
-// You can replace this with actual dynamic data from a backend
+document.addEventListener("DOMContentLoaded", function() {
+    // Function to fetch available slots for the selected date
+    function fetchAvailableSlots(selectedDate) {
+        const formattedDate = selectedDate.split('-').reverse().join('-');
+console.log("Formatted date:", formattedDate);
+        fetch(`/slots?date=${formattedDate}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(slots => {
+                if (slots.length === 0) {
+                    showNoSlotsMessage();
+                    return;
+                }
+                populateTimeSlots(slots);
+            })
+            .catch(error => {
+                console.error("Error fetching available slots:", error.message);
+            });
+    }
 
-const slots = [
-  "Monday 9:00 AM - 10:00 AM",
-  "Tuesday 10:00 AM - 11:00 AM",
-  "Wednesday 2:00 PM - 3:00 PM",
-];
+    function showNoSlotsMessage() {
+        var timeSlotsContainer = document.getElementById("time-slots");
+        timeSlotsContainer.innerHTML = "<p>No slots available for selected date</p>";
+    }
+    // Function to populate available time slots in the HTML form
+    function populateTimeSlots(slots) {
+        var timeSlotsContainer = document.getElementById("time-slots");
+        timeSlotsContainer.innerHTML = ""; // Clear existing slots
 
-const slotList = document.getElementById("slotList");
-const slotSelect = document.getElementById("slot");
+        slots.forEach(function(slot) {
+            var slotDiv = document.createElement("div");
+            slotDiv.classList.add("form-group");
+            var timeLabel = document.createElement("label");
+            timeLabel.textContent = slot.time;
+            slotDiv.appendChild(timeLabel);
+            var radioInput = document.createElement("input");
+            radioInput.type = "radio";
+            radioInput.id = slot.time; // Assuming time is unique
+            radioInput.name = "time";
+            radioInput.value = slot.time;
+            slotDiv.appendChild(radioInput);
+            timeSlotsContainer.appendChild(slotDiv);
+        });
+    }
 
-// Populate available slots on the slots.html page
-slots.forEach((slot) => {
-  const li = document.createElement("li");
-  li.textContent = slot;
-  slotList.appendChild(li);
-
-  const option = document.createElement("option");
-  option.value = slot;
-  option.textContent = slot;
-  slotSelect.appendChild(option);
+    // Event listener for date select input change
+    document.getElementById("date").addEventListener("change", function() {
+        var selectedDate = this.value;
+        console.log("Selected date:", selectedDate);
+        
+            fetchAvailableSlots(selectedDate);
+        
+    });
 });
